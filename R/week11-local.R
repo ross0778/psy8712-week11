@@ -6,6 +6,9 @@ library(haven)
 library(jtools)
 library(xgboost)
 library(devtools)
+library(parallel)
+library(doParallel)
+library(tictoc)
 
 # Data Import and Cleaning
 gss_tbl <- read_sav("../data/GSS2016.sav", user_na = TRUE) %>% 
@@ -32,6 +35,7 @@ fold_indices <- createFolds(gss_training$mosthrs, k = 10)
 gss_training <- gss_training %>% 
   mutate(mosthrs = as.numeric(mosthrs))
 
+tic() # this starts to time the OLS model so I can gather the data summarizing the number of seconds required to execute each version of the ML approach
 ols_model <- train(
   mosthrs ~ .,
   data = gss_training,
@@ -45,7 +49,10 @@ ols_model <- train(
     indexOut = fold_indices
   )
 )
+og_ols <- toc() # this stops the time and will return the time elapsed
+# this also stores this value with the returned time as og_ols
 
+tic() # this starts to time the elastic model so I can gather the data summarizing the number of seconds required to execute each version of the ML approach
 elastic_model <- train(
   mosthrs ~ .,
   data = gss_training,
@@ -64,6 +71,10 @@ elastic_model <- train(
   )
 )
 
+og_elastic <- toc() # this stops the time and will return the time elapsed
+# this also stores this value with the returned time as og_elastic
+
+tic() # this starts to time the random forest model so I can gather the data summarizing the number of seconds required to execute each version of the ML approach
 forest_model <- train(
   mosthrs ~ .,
   data = gss_training,
@@ -79,6 +90,10 @@ forest_model <- train(
   )
 )
 
+og_forest <- toc() # this stops the time and will return the time elapsed
+# this also stores this value with the returned time as og_forest
+
+tic() # this starts to time the eXtreme gradient boosting model so I can gather the data summarizing the number of seconds required to execute each version of the ML approach
 extreme_model <- train(
   mosthrs ~ .,
   data = gss_training,
@@ -93,6 +108,16 @@ extreme_model <- train(
     indexOut = fold_indices
   )
 )
+
+og_extreme <- toc() # this stops the time and will return the time elapsed
+# this also stores this value with the returned time as og_extreme
+
+# here I start to set up the parallelization process
+
+
+
+
+
 
 # Publication
 holdout_rsq <- function(model, holdout) {
@@ -120,3 +145,5 @@ table1_tbl <- tibble(
 
 table1_tbl
 write_csv(table1_tbl, "../out/table1.csv")
+
+
