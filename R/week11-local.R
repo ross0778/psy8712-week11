@@ -113,9 +113,8 @@ og_extreme <- toc() # this stops the time and will return the time elapsed
 # this also stores this value with the returned time as og_extreme
 
 # here I start to set up the parallelization process
-
-
-
+local_cluster <- makeCluster(7) # using detectCores() in the console, I found that I have 8 CPU cores on my computer. I subtracted 1 to save one core for the operating system
+registerDoParallel(local_cluster) # this tells caret to distribute the CV fold iterations across the local_cluster nodes
 
 
 
