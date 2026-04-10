@@ -13,5 +13,5 @@
 
 cd ~/psy8712-week11/msi
 mkdir -p ../out
-module load R/4.3.0-openblas
+module load R/4.3.0
 Rscript week11-cluster.R
