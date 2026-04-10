@@ -239,3 +239,22 @@ table2_tbl <- tibble(
 
 table2_tbl
 write_csv(table2_tbl, "../out/table2.csv") # this writes the csv for table 2 and puts it in the out folder
+
+# Which models benefited most from parallelization and why?
+# It looks like random forest and extreme gradient boosting benefited the most from parallelization.
+# This is because both have 10 CV folds and very large hyperparameter grids, which therefore creates a large amount of iterations to distribute across cores.
+# On the other hand, OLS regression doesn't have a tuning grid, so parallelization even increased the elapsed time a bit because it adds inter-communication time into the process.
+
+# How big was the difference between the fastest and slowest parallelized model? Why?
+max(table2_tbl$parallelized) - min(table2_tbl$parallelized)
+# The difference between the fastest and slowest parallelized model was 5,286.919 seconds.
+# This difference is so large because the models vary a lot in their complexity.
+# Meaning, the extreme gradient boosting model is a lot more computationally heavy than OLS regression.
+# This is true even with parallelization, since parallelization only reduces but can't completely nullify the consequences of these differences in complexity.
+
+# If your supervisor asked you to pick a model for use in a production model, which would you recommend and why? Consider both table 1 and table 2 when providing an answer.
+# While in project 10 I chose the random forest model, with this new information I would now choose the elastic net model.
+# This is because elastic net still has a large CV R^2 at .86 and holdout R^2 at .43 but is also, by far, the fastest model.
+# Although models such as random forest and extreme gradient boosting may show slightly higher holdout R^2 values, they are considerably more computationally complex and require a lot more time to run.
+
+
