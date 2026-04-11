@@ -1,6 +1,12 @@
 # Script Settings and Resources
 .libPaths("~/R/library")
-library(tidyverse)
+library(dplyr)
+library(tidyr)
+library(readr)
+library(purrr)
+library(tibble)
+library(stringr)
+library(forcats)
 library(caret)
 library(haven)
 library(jtools)
