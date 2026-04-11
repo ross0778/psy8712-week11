@@ -1,4 +1,5 @@
 # Script Settings and Resources
+.libPaths("~/R/library")
 library(tidyverse)
 library(caret)
 library(haven)

@@ -13,5 +13,5 @@
 
 cd ~/psy8712-week11/msi
 mkdir -p ../out
-module load R/4.3.0
+module load R/4.2.2-gcc-8.2.0-vp7tyde
 Rscript week11-cluster.R
