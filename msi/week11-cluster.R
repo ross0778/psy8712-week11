@@ -17,6 +17,7 @@ gss_tbl <- read_sav("../data/GSS2016.sav", user_na = TRUE) %>%
   mutate(mosthrs = as.numeric(mosthrs)) %>% 
   filter(!is.na(mosthrs)) %>%
   select(-hrs1, -hrs2) %>%
+  select(-id, -year, -fileversion, -ballot, cohort, -dateintv, -conrinc, -coninc, -ballotformwt, -ballotformwtnr) %>% # added to try and get rid of extra variables to troubleshoot for MSI
   select_if(~ mean(is.na(.)) < 0.75)
 
 # Analysis
