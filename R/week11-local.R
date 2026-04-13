@@ -12,6 +12,7 @@ library(tictoc)
 # Data Import and Cleaning
 gss_tbl <- read_sav("../data/GSS2016.sav", user_na = TRUE) %>% 
   zap_missing() %>% 
+  mutate(across(where(haven::is.labelled), as.numeric)) %>% 
   mutate(mosthrs = as.numeric(mosthrs)) %>% 
   filter(!is.na(mosthrs)) %>%
   select(-hrs1, -hrs2) %>%
