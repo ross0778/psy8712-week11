@@ -1,7 +1,6 @@
 # Script Settings and Resources
 library(dplyr)
 library(stringr)
-library(glmnet)
 library(readr)
 library(caret)
 library(haven)
