@@ -2,6 +2,7 @@
 library(dplyr)
 library(stringr)
 library(readr)
+library(ranger)
 library(caret)
 library(haven)
 library(xgboost)
