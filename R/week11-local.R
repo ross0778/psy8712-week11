@@ -1,9 +1,8 @@
 # Script Settings and Resources
-setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
-library(tidyverse)
+library(dplyr)
+library(readr)
 library(caret)
 library(haven)
-library(jtools)
 library(xgboost)
 library(devtools)
 library(parallel)
@@ -18,13 +17,6 @@ gss_tbl <- read_sav("../data/GSS2016.sav", user_na = TRUE) %>%
   select(-hrs1, -hrs2) %>%
   select_if(~ mean(is.na(.)) < 0.75)
 
-# Visualization
-ggplot(gss_tbl, aes(x = mosthrs)) +
-  geom_histogram(binwidth = 10, fill = "#A80000") +
-  xlab("Work Hours") +
-  ylab("Count") +
-  theme_apa()
-
 # Analysis
 set.seed(42)
 holdout_indices <- createDataPartition(gss_tbl$mosthrs, p = 0.25, list = F)
@@ -35,7 +27,7 @@ fold_indices <- createFolds(gss_training$mosthrs, k = 10)
 gss_training <- gss_training %>% 
   mutate(mosthrs = as.numeric(mosthrs))
 
-tic() # this starts to time the OLS model so I can gather the data summarizing the number of seconds required to execute each version of the ML approach
+tic()
 ols_model <- train(
   mosthrs ~ .,
   data = gss_training,
@@ -49,10 +41,9 @@ ols_model <- train(
     indexOut = fold_indices
   )
 )
-og_time_ols <- toc() # this stops the time and will return the time elapsed
-# this also stores this value with the returned time as og_time_ols
+og_time_ols <- toc()
 
-tic() # this starts to time the elastic model so I can gather the data summarizing the number of seconds required to execute each version of the ML approach
+tic() 
 elastic_model <- train(
   mosthrs ~ .,
   data = gss_training,
@@ -71,10 +62,9 @@ elastic_model <- train(
   )
 )
 
-og_time_elastic <- toc() # this stops the time and will return the time elapsed
-# this also stores this value with the returned time as og_time_elastic
+og_time_elastic <- toc()
 
-tic() # this starts to time the random forest model so I can gather the data summarizing the number of seconds required to execute each version of the ML approach
+tic()
 forest_model <- train(
   mosthrs ~ .,
   data = gss_training,
@@ -90,17 +80,16 @@ forest_model <- train(
   )
 )
 
-og_time_forest <- toc() # this stops the time and will return the time elapsed
-# this also stores this value with the returned time as og_time_forest
+og_time_forest <- toc()
 
-tic() # this starts to time the eXtreme gradient boosting model so I can gather the data summarizing the number of seconds required to execute each version of the ML approach
+tic()
 extreme_model <- train(
   mosthrs ~ .,
   data = gss_training,
   method = "xgbLinear",
   na.action = na.pass,
   preProcess = "medianImpute",
-  tuneLength = 10,
+  tuneLength = 3, # shorter for time
   trControl = trainControl(
     method = "cv",
     number = 10,
@@ -109,14 +98,13 @@ extreme_model <- train(
   )
 )
 
-og_time_extreme <- toc() # this stops the time and will return the time elapsed
-# this also stores this value with the returned time as og_time_extreme
+og_time_extreme <- toc()
 
-# here I start to set up the parallelization process
-local_cluster <- makeCluster(7) # using detectCores() in the console, I found that I have 8 CPU cores on my computer. I subtracted 1 to save one core for the operating system
-registerDoParallel(local_cluster) # this tells caret to distribute the CV fold iterations across the local_cluster nodes
+number_cores <- detectCores() # this detects the cores on the node
+local_cluster <- makeCluster(number_cores) # this is modified so that all cores detected are now used instead of 7
+registerDoParallel(local_cluster)
 
-tic() # this starts the timer for the first parallelized model
+tic()
 ols_model_parallel <- train(
   mosthrs ~ .,
   data = gss_training,
@@ -131,10 +119,9 @@ ols_model_parallel <- train(
   )
 )
 
-parallel_time_ols <- toc() # this stops the time and will return the time elapsed
-# this also stores this value with the returned time as parallel_time_ols
+parallel_time_ols <- toc()
 
-tic() # this starts the timer for the second parallelized model
+tic()
 elastic_model_parallel <- train(
   mosthrs ~ .,
   data = gss_training,
@@ -152,35 +139,33 @@ elastic_model_parallel <- train(
     lambda = seq(0.0001, 0.1, length = 10)
   )
 )
-parallel_time_elastic <- toc() # this stops the time and will return the time elapsed
-# this also stores this value with the returned time as parallel_time_elastic
+parallel_time_elastic <- toc()
 
-tic() # this starts the timer for the third parallelized model
+tic()
 forest_model_parallel <- train(
   mosthrs ~ .,
   data = gss_training,
   method = "ranger",
   na.action = na.pass,
   preProcess = "medianImpute",
-  tuneLength = 10,
+  tuneLength = 3, # shorter for time
   trControl = trainControl(
     method = "cv",
-    number = 10,
+    number = 2,
     verboseIter = TRUE,
     indexOut = fold_indices
   )
 )
-parallel_time_forest <- toc() # this stops the time and will return the time elapsed
-# this also stores this value with the returned time as parallel_time_forest
+parallel_time_forest <- toc()
 
-tic() # this starts the timer for the fourth parallelized model
+tic()
 extreme_model_parallel <- train(
   mosthrs ~ .,
   data = gss_training,
   method = "xgbLinear",
   na.action = na.pass,
   preProcess = "medianImpute",
-  tuneLength = 10,
+  tuneLength = 3, # shorter for time
   trControl = trainControl(
     method = "cv",
     number = 10,
@@ -188,11 +173,10 @@ extreme_model_parallel <- train(
     indexOut = fold_indices
   )
 )
-parallel_time_extreme <- toc() # this stops the time and will return the time elapsed
-# this also stores this value with the returned time as parallel_time_extreme
+parallel_time_extreme <- toc()
 
-stopCluster(local_cluster) # this shuts down the parallel computing cluster
-registerDoSEQ() # this makes sure that caret now runs sequentially and no longer in parallel
+stopCluster(local_cluster)
+registerDoSEQ()
 
 # Publication
 holdout_rsq <- function(model, holdout) {
@@ -200,7 +184,7 @@ holdout_rsq <- function(model, holdout) {
   cor(predicted, holdout$mosthrs)^2
 }
 
-table1_tbl <- tibble(
+table3_tbl <- tibble( # changed to be table 3
   algo = c("OLS Regression", "Elastic Net", "Random Forest", "eXtreme Gradient Boosting"),
   cv_rsq = c(
     max(ols_model$results$Rsquared, na.rm = TRUE),
@@ -218,43 +202,24 @@ table1_tbl <- tibble(
   mutate(across(c(cv_rsq, ho_rsq), ~ formatC(round(.x, 2), format = "f", digits = 2) %>% 
                   str_remove("^0")))
 
-table1_tbl
-write_csv(table1_tbl, "../out/table1.csv")
+table3_tbl # changed to be table 3
+write_csv(table3_tbl, "../out/table3.csv") # changed to be table 3
 
-table2_tbl <- tibble(
+table4_tbl <- tibble( # changed to be table 4
   algo = c("OLS Regression", "Elastic Net", "Random Forest", "eXtreme Gradient Boosting"),
-  original = c( # this finds the elapsed time for the original models
-    og_time_ols$toc - og_time_ols$tic, # subtracting tic() from toc() gives the elapsed seconds
-    og_time_elastic$toc - og_time_elastic$tic, # subtracting tic() from toc() gives the elapsed seconds
-    og_time_forest$toc - og_time_forest$tic, # subtracting tic() from toc() gives the elapsed seconds
-    og_time_extreme$toc - og_time_extreme$tic # subtracting tic() from toc() gives the elapsed seconds
-  ),
-  parallelized = c( # this finds the elapsed time for the parallelized models
-    parallel_time_ols$toc - parallel_time_ols$tic, # subtracting tic() from toc() gives the elapsed seconds
-    parallel_time_elastic$toc - parallel_time_elastic$tic, # subtracting tic() from toc() gives the elapsed seconds
-    parallel_time_forest$toc - parallel_time_forest$tic, # subtracting tic() from toc() gives the elapsed seconds
-    parallel_time_extreme$toc - parallel_time_extreme$tic # subtracting tic() from toc() gives the elapsed seconds
+  supercomputer = c( # this changes the first column name to supercomputer
+    og_time_ols$toc - og_time_ols$tic,
+    og_time_elastic$toc - og_time_elastic$tic,
+    og_time_forest$toc - og_time_forest$tic,
+    og_time_extreme$toc - og_time_extreme$tic
   )
 )
+table4_tbl[[paste0("supercomputer_", number_cores)]] <- c( # because I wanted the number of cores in the column name to be dynamic, I had to break this step creating the column names into two steps. This line dynamically adds the number of cores in the column name
+  parallel_time_ols$toc - parallel_time_ols$tic,
+  parallel_time_elastic$toc - parallel_time_elastic$tic,
+  parallel_time_forest$toc - parallel_time_forest$tic,
+  parallel_time_extreme$toc - parallel_time_extreme$tic
+)
 
-table2_tbl
-write_csv(table2_tbl, "../out/table2.csv") # this writes the csv for table 2 and puts it in the out folder
-
-# Which models benefited most from parallelization and why?
-# It looks like random forest and extreme gradient boosting benefited the most from parallelization.
-# This is because both have 10 CV folds and very large hyperparameter grids, which therefore creates a large amount of iterations to distribute across cores.
-# On the other hand, OLS regression doesn't have a tuning grid, so parallelization even increased the elapsed time a bit because it adds inter-communication time into the process.
-
-# How big was the difference between the fastest and slowest parallelized model? Why?
-max(table2_tbl$parallelized) - min(table2_tbl$parallelized)
-# The difference between the fastest and slowest parallelized model was 5,286.919 seconds.
-# This difference is so large because the models vary a lot in their complexity.
-# Meaning, the extreme gradient boosting model is a lot more computationally heavy than OLS regression.
-# This is true even with parallelization, since parallelization only reduces but can't completely nullify the consequences of these differences in complexity.
-
-# If your supervisor asked you to pick a model for use in a production model, which would you recommend and why? Consider both table 1 and table 2 when providing an answer.
-# While in project 10 I chose the random forest model, with this new information I would now choose the elastic net model.
-# This is because elastic net still has a large CV R^2 at .86 and holdout R^2 at .43 but is also, by far, the fastest model.
-# Although models such as random forest and extreme gradient boosting may show slightly higher holdout R^2 values, they are considerably more computationally complex and require a lot more time to run.
-
-
+table4_tbl # changed to be table 4
+write_csv(table4_tbl, "../out/table4.csv") # changed to be table 4
