@@ -1,5 +1,6 @@
 # Script Settings and Resources
 library(dplyr)
+library(stringr)
 library(glmnet)
 library(readr)
 library(caret)
@@ -71,7 +72,7 @@ forest_model <- train(
   method = "ranger",
   na.action = na.pass,
   preProcess = "medianImpute",
-  tuneLength = 10,
+  tuneLength = 3, # shorter for time
   trControl = trainControl(
     method = "cv",
     number = 10,
@@ -89,7 +90,7 @@ extreme_model <- train(
   method = "xgbLinear",
   na.action = na.pass,
   preProcess = "medianImpute",
-  tuneLength = 10,
+  tuneLength = 3, # shorter for time
   trControl = trainControl(
     method = "cv",
     number = 10,
@@ -148,7 +149,7 @@ forest_model_parallel <- train(
   method = "ranger",
   na.action = na.pass,
   preProcess = "medianImpute",
-  tuneLength = 10,
+  tuneLength = 3, # shorter for time
   trControl = trainControl(
     method = "cv",
     number = 10,
@@ -165,7 +166,7 @@ extreme_model_parallel <- train(
   method = "xgbLinear",
   na.action = na.pass,
   preProcess = "medianImpute",
-  tuneLength = 10,
+  tuneLength = 3, # shorter for time
   trControl = trainControl(
     method = "cv",
     number = 10,
