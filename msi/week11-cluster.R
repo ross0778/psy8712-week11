@@ -34,7 +34,7 @@ ols_model <- train(
   data = gss_training,
   method = "lm",
   na.action = na.pass,
-  preProcess = "medianImpute",
+  preProcess = c("medianImpute", "center", "nzv", "scale"), # update to troubleshoot for MSI
   trControl = trainControl(
     method = "cv",
     number = 10,
@@ -50,7 +50,7 @@ forest_model <- train(
   data = gss_training,
   method = "ranger",
   na.action = na.pass,
-  preProcess = "medianImpute",
+  preProcess = c("medianImpute", "center", "nzv", "scale"), # update to troubleshoot for MSI
   tuneLength = 3, # shorter for time
   trControl = trainControl(
     method = "cv",
@@ -68,7 +68,7 @@ extreme_model <- train(
   data = gss_training,
   method = "xgbLinear",
   na.action = na.pass,
-  preProcess = "medianImpute",
+  preProcess = c("medianImpute", "center", "nzv", "scale"), # update to troubleshoot for MSI
   tuneLength = 3, # shorter for time
   trControl = trainControl(
     method = "cv",
@@ -90,7 +90,7 @@ ols_model_parallel <- train(
   data = gss_training,
   method = "lm",
   na.action = na.pass,
-  preProcess = "medianImpute",
+  preProcess = c("medianImpute", "center", "nzv", "scale"), # update to troubleshoot for MSI
   trControl = trainControl(
     method = "cv",
     number = 10,
@@ -108,7 +108,7 @@ forest_model_parallel <- train(
   data = gss_training,
   method = "ranger",
   na.action = na.pass,
-  preProcess = "medianImpute",
+  preProcess = c("medianImpute", "center", "nzv", "scale"), # update to troubleshoot for MSI
   tuneLength = 3, # shorter for time
   trControl = trainControl(
     method = "cv",
@@ -125,7 +125,7 @@ extreme_model_parallel <- train(
   data = gss_training,
   method = "xgbLinear",
   na.action = na.pass,
-  preProcess = "medianImpute",
+  preProcess = c("medianImpute", "center", "nzv", "scale"), # update to troubleshoot for MSI
   tuneLength = 3, # shorter for time
   trControl = trainControl(
     method = "cv",
