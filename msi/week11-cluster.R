@@ -44,27 +44,6 @@ ols_model <- train(
 )
 og_time_ols <- toc()
 
-tic() 
-elastic_model <- train(
-  mosthrs ~ .,
-  data = gss_training,
-  method = "glmnet",
-  na.action = na.pass,
-  preProcess = c("medianImpute", "center", "scale"),
-  trControl = trainControl(
-    method = "cv",
-    number = 10,
-    verboseIter = TRUE,
-    indexOut = fold_indices
-  ),
-  tuneGrid = expand.grid(
-    alpha = c(0, 1),
-    lambda = seq(0.0001, 0.1, length = 10)
-  )
-)
-
-og_time_elastic <- toc()
-
 tic()
 forest_model <- train(
   mosthrs ~ .,
@@ -122,25 +101,6 @@ ols_model_parallel <- train(
 
 parallel_time_ols <- toc()
 
-tic()
-elastic_model_parallel <- train(
-  mosthrs ~ .,
-  data = gss_training,
-  method = "glmnet",
-  na.action = na.pass,
-  preProcess = c("medianImpute", "center", "scale"),
-  trControl = trainControl(
-    method = "cv",
-    number = 10,
-    verboseIter = TRUE,
-    indexOut = fold_indices
-  ),
-  tuneGrid = expand.grid(
-    alpha = c(0, 1),
-    lambda = seq(0.0001, 0.1, length = 10)
-  )
-)
-parallel_time_elastic <- toc()
 
 tic()
 forest_model_parallel <- train(
@@ -186,16 +146,14 @@ holdout_rsq <- function(model, holdout) {
 }
 
 table3_tbl <- tibble( # changed to be table 3
-  algo = c("OLS Regression", "Elastic Net", "Random Forest", "eXtreme Gradient Boosting"),
+  algo = c("OLS Regression", "Random Forest", "eXtreme Gradient Boosting"),
   cv_rsq = c(
     max(ols_model$results$Rsquared, na.rm = TRUE),
-    max(elastic_model$results$Rsquared, na.rm = TRUE),
     max(forest_model$results$Rsquared, na.rm = TRUE),
     max(extreme_model$results$Rsquared, na.rm = TRUE)
   ),
   ho_rsq = c(
     holdout_rsq(ols_model, gss_holdout),
-    holdout_rsq(elastic_model, gss_holdout),
     holdout_rsq(forest_model, gss_holdout),
     holdout_rsq(extreme_model, gss_holdout)
   )
@@ -207,17 +165,15 @@ table3_tbl # changed to be table 3
 write_csv(table3_tbl, "../out/table3.csv") # changed to be table 3
 
 table4_tbl <- tibble( # changed to be table 4
-  algo = c("OLS Regression", "Elastic Net", "Random Forest", "eXtreme Gradient Boosting"),
+  algo = c("OLS Regression", "Random Forest", "eXtreme Gradient Boosting"),
   supercomputer = c( # this changes the first column name to supercomputer
     og_time_ols$toc - og_time_ols$tic,
-    og_time_elastic$toc - og_time_elastic$tic,
     og_time_forest$toc - og_time_forest$tic,
     og_time_extreme$toc - og_time_extreme$tic
   )
 )
 table4_tbl[[paste0("supercomputer_", number_cores)]] <- c( # because I wanted the number of cores in the column name to be dynamic, I had to break this step creating the column names into two steps. This line dynamically adds the number of cores in the column name
     parallel_time_ols$toc - parallel_time_ols$tic,
-    parallel_time_elastic$toc - parallel_time_elastic$tic,
     parallel_time_forest$toc - parallel_time_forest$tic,
     parallel_time_extreme$toc - parallel_time_extreme$tic
   )
