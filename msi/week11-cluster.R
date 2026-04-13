@@ -182,3 +182,14 @@ table4_tbl[[paste0("supercomputer_", number_cores)]] <- c( # because I wanted th
 
 table4_tbl # changed to be table 4
 write_csv(table4_tbl, "../out/table4.csv") # changed to be table 4
+
+# Which models benefited most from moving to the supercomputer and why?
+# I was not able to successfully get the batch script to run so I am not sure, but I would guess that the models that take are more computationally heavy would benefit the most.
+
+# What is the relationship between time and the number of cores used?
+# Again, I was not able to compare since my batch script would not run, but I would imagine that for the computationally heavy models such as random forest and xgbLinear, the time would decrease as the number of cores increases. 
+
+# If your supervisor asked you to pick a model for use in a production model, would you recommend using the supercomputer and why? Consider all four tables when providing an answer.
+# Although I do not have my results, I would pick the model that explains the most variance. Because we're using the supercomputer, I would imagine that the time it takes to run the model becomes far less important than it would on my own laptop, so going with the model that explains the most variance would be the best choice.
+
+
